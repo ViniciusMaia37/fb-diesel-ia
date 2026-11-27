@@ -1,0 +1,51 @@
+// Configuração do Cloudflare Workers (plano gratuito)
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fb-diesel-ia",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+
+  // Telas (HTML/CSS/JS) servidas direto pelo Cloudflare; só /api/* passa pelo Worker
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Banco de dados D1 (SQLite). O database_id é preenchido depois do "wrangler d1 create".
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fb-diesel-ia",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // IA gratuita do Cloudflare (cota diária). Ao acabar a cota, o chat mostra só os trechos da base.
+  "ai": { "binding": "AI" },
+
+  "vars": {
+    "AI_MODE": "on",
+    "AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "SESSION_HOURS": "12"
+  },
+
+  "observability": { "enabled": true },
+
+  // Ambiente de teste local, sem IA (não precisa de login no Cloudflare): wrangler dev --env test
+  "env": {
+    "test": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "fb-diesel-ia",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": { "AI_MODE": "off", "AI_MODEL": "", "SESSION_HOURS": "12" }
+    }
+  }
+}

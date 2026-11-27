@@ -1,0 +1,22 @@
+node_modules/
+
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+
+# Banco de dados local (usuários, senhas e histórico de conversas)
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Conteúdo interno da FB (Método FB). Fica fora do repositório por padrão.
+# Para versioná-lo num repositório PRIVADO, remova a linha abaixo.
+knowledge/interno/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

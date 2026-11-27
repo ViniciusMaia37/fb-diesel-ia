@@ -1,0 +1,21 @@
+{
+  "name": "fb-diesel-ia",
+  "version": "1.0.0",
+  "description": "Assistente de IA da FB Consult para consulta da legislação e do Método FB de gestão de diesel",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "kb:import": "node --env-file-if-exists=.env scripts/import-knowledge.js",
+    "admin:reset": "node --env-file-if-exists=.env scripts/reset-admin.js",
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0"
+  }
+}

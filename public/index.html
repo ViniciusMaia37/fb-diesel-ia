@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FB Consult · Assistente Diesel</title>
+  <link rel="icon" type="image/png" href="/img/logo-fb-escura.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="screen-login" class="screen split" hidden>
+    <aside class="brand-panel">
+      <img class="brand-panel__logo" src="/img/logo-fb-branca.png" alt="FB Consult">
+      <div class="brand-panel__txt">
+        <p class="kicker">FB CONSULTORIA · DIESEL</p>
+        <h1 class="brand-panel__title">Legislação do diesel na palma da mão.</h1>
+        <p class="brand-panel__sub">Assistente com IA para os consultores da FB: tributação, ANP, CONTRAN, biodiesel e o Método FB, sempre com a fonte.</p>
+      </div>
+      <div class="brand-panel__foot"><span>FB Consultoria</span><span class="mono">1.0</span></div>
+    </aside>
+    <main class="form-wrap">
+      <form id="login-form" class="card-form" autocomplete="on" novalidate>
+        <h2>Entrar</h2>
+        <p class="muted">Use o usuário fornecido pelo administrador.</p>
+        <label class="field">
+          <span>Usuário</span>
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+            <input name="username" type="text" autocomplete="username" required autofocus>
+          </span>
+        </label>
+        <label class="field">
+          <span>Senha</span>
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            <input name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="pwd-toggle" aria-label="Mostrar senha">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </span>
+        </label>
+        <p class="caps-warn" hidden>Caps Lock está ativado.</p>
+        <p class="form-error" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+        <p class="note">Sem acesso? O cadastro é feito pelo administrador da plataforma na FB Consult.</p>
+        <div class="card-foot"><span>FB Consult · uso interno</span><span>Assistente Diesel</span></div>
+      </form>
+    </main>
+  </section>
+
+  <!-- ============ TROCA DE SENHA ============ -->
+  <section id="screen-password" class="screen split" hidden>
+    <aside class="brand-panel">
+      <img class="brand-panel__logo" src="/img/logo-fb-branca.png" alt="FB Consult">
+      <div class="brand-panel__txt">
+        <p class="kicker">PRIMEIRO ACESSO</p>
+        <h1 class="brand-panel__title">Crie a sua senha pessoal.</h1>
+        <p class="brand-panel__sub">A senha provisória enviada pelo administrador vale só para este primeiro login.</p>
+      </div>
+      <div class="brand-panel__foot"><span>FB Consultoria</span><span class="mono">1.0</span></div>
+    </aside>
+    <main class="form-wrap">
+      <form id="password-form" class="card-form" novalidate>
+        <h2>Nova senha</h2>
+        <p class="muted">Mínimo de 8 caracteres, com letras e números.</p>
+        <label class="field"><span>Senha atual (provisória)</span><input name="currentPassword" type="password" autocomplete="current-password" required></label>
+        <label class="field"><span>Nova senha</span><input name="newPassword" type="password" autocomplete="new-password" required minlength="8"></label>
+        <label class="field"><span>Confirme a nova senha</span><input name="confirm" type="password" autocomplete="new-password" required minlength="8"></label>
+        <p class="form-error" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit">Salvar e continuar</button>
+        <button class="btn btn-link btn-block" type="button" data-action="logout">Sair</button>
+      </form>
+    </main>
+  </section>
+
+  <!-- ============ APLICAÇÃO ============ -->
+  <section id="screen-app" class="screen app" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__head">
+        <img class="sidebar__logo" src="/img/logo-fb-branca.png" alt="FB Consult">
+        <button class="icon-btn sidebar__close" data-action="close-sidebar" aria-label="Fechar menu">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <p class="kicker sidebar__kicker">ASSISTENTE DIESEL</p>
+      <button class="btn btn-ghost-light btn-block" data-action="new-chat">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nova conversa
+      </button>
+      <div class="sidebar__search">
+        <input id="conv-search" type="search" placeholder="Buscar conversas" aria-label="Buscar conversas">
+      </div>
+      <nav class="conv-list" id="conv-list" aria-label="Histórico de conversas"></nav>
+      <div class="sidebar__nav">
+        <button class="nav-btn" data-view="chat">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg> Conversas
+        </button>
+        <button class="nav-btn" data-view="sources">
+          <svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5M8 13h8M8 17h6"/></svg> Fontes
+        </button>
+        <button class="nav-btn" data-view="admin" data-admin-only hidden>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg> Administração
+        </button>
+      </div>
+      <div class="sidebar__user">
+        <div class="avatar" id="user-avatar">?</div>
+        <div class="sidebar__user-txt">
+          <strong id="user-name"></strong>
+          <span id="user-role"></span>
+        </div>
+        <button class="icon-btn" data-action="logout" title="Sair" aria-label="Sair">
+          <svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
+        </button>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" data-action="close-sidebar"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn topbar__menu" data-action="open-sidebar" aria-label="Abrir menu">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1 class="topbar__title" id="topbar-title">Assistente Diesel</h1>
+        <span class="pill" id="ai-status"></span>
+      </header>
+
+      <!-- Chat -->
+      <section class="view" id="view-chat">
+        <div class="chat-scroll" id="chat-scroll">
+          <div class="chat" id="chat"></div>
+        </div>
+        <form class="composer" id="composer">
+          <div class="composer__box">
+            <textarea id="composer-input" rows="1" placeholder="Pergunte sobre ICMS, PIS/COFINS, biodiesel, tanque interno, ARLA, Método FB…" aria-label="Sua pergunta" maxlength="8000"></textarea>
+            <button class="btn btn-primary composer__send" type="submit" aria-label="Enviar">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <p class="composer__hint">Respostas geradas por IA a partir da base FB. Confirme valores e vigência na fonte oficial antes de usar com o cliente.</p>
+        </form>
+      </section>
+
+      <!-- Fontes -->
+      <section class="view" id="view-sources" hidden>
+        <div class="page">
+          <div class="page__head">
+            <div>
+              <p class="kicker kicker--dark">BASE DE CONHECIMENTO</p>
+              <h2>Fontes de informação</h2>
+              <p class="muted">Documentos usados pelo assistente. Cada um traz a norma de origem, o link oficial e a data da última verificação.</p>
+            </div>
+            <input id="doc-search" class="input" type="search" placeholder="Filtrar documentos" aria-label="Filtrar documentos">
+          </div>
+          <div class="chips" id="doc-categories"></div>
+          <div class="sources-layout">
+            <div class="doc-list" id="doc-list"></div>
+            <article class="doc-reader" id="doc-reader">
+              <p class="muted empty">Selecione um documento para ler.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Administração -->
+      <section class="view" id="view-admin" hidden>
+        <div class="page">
+          <div class="page__head">
+            <div>
+              <p class="kicker kicker--dark">ADMINISTRAÇÃO</p>
+              <h2>Usuários e base de conhecimento</h2>
+            </div>
+          </div>
+          <div class="stats" id="admin-stats"></div>
+          <div class="tabs" role="tablist">
+            <button class="tab is-active" role="tab" data-tab="users">Usuários</button>
+            <button class="tab" role="tab" data-tab="documents">Documentos</button>
+          </div>
+          <div class="tab-panel" id="tab-users">
+            <div class="toolbar">
+              <p class="muted">Crie usuários para os consultores. A senha provisória aparece uma única vez e a troca é exigida no primeiro acesso.</p>
+              <button class="btn btn-primary" data-action="new-user">Novo usuário</button>
+            </div>
+            <div class="table-wrap"><table class="table" id="users-table"></table></div>
+          </div>
+          <div class="tab-panel" id="tab-documents" hidden>
+            <div class="toolbar">
+              <p class="muted">Edite ou inclua documentos. Use títulos de seção com "## " para o assistente encontrar os trechos com precisão.</p>
+              <button class="btn btn-primary" data-action="new-document">Novo documento</button>
+            </div>
+            <div class="table-wrap"><table class="table" id="docs-table"></table></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <dialog id="modal" class="modal">
+    <form method="dialog" class="modal__inner" id="modal-form" novalidate>
+      <header class="modal__head">
+        <h3 id="modal-title"></h3>
+        <button class="icon-btn" value="cancel" formnovalidate aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <div class="modal__body" id="modal-body"></div>
+      <p class="form-error" id="modal-error" role="alert" hidden></p>
+      <footer class="modal__foot" id="modal-foot"></footer>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

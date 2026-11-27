@@ -1,21 +1,29 @@
 {
   "name": "fb-diesel-ia",
-  "version": "1.0.0",
-  "description": "Assistente de IA da FB Consult para consulta da legislação e do Método FB de gestão de diesel",
+  "version": "2.0.0",
+  "description": "Assistente de IA da FB Consult para consulta da legislação e do Método FB de gestão de diesel (Cloudflare Workers + D1 + Workers AI)",
   "private": true,
   "type": "module",
-  "main": "server.js",
   "scripts": {
-    "start": "node --env-file-if-exists=.env server.js",
-    "dev": "node --env-file-if-exists=.env --watch server.js",
-    "kb:import": "node --env-file-if-exists=.env scripts/import-knowledge.js",
-    "admin:reset": "node --env-file-if-exists=.env scripts/reset-admin.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply fb-diesel-ia --local",
+    "db:migrate:remote": "wrangler d1 migrations apply fb-diesel-ia --remote",
+    "kb:sync:local": "node scripts/kb-sync.js --local",
+    "kb:sync:remote": "node scripts/kb-sync.js --remote",
+    "admin:create:local": "node scripts/create-admin.js --local",
+    "admin:create:remote": "node scripts/create-admin.js --remote",
+    "setup:local": "npm run db:migrate:local && npm run kb:sync:local && npm run admin:create:local",
     "test": "node --test test/"
   },
   "engines": {
     "node": ">=22.13"
   },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^1.14.0"
+  "devDependencies": {
+    "wrangler": "^4.168.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261123.1": true
   }
 }

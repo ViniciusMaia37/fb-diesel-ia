@@ -1,24 +1,19 @@
-// Geração de respostas com Claude (API Anthropic), usando os trechos da base de conhecimento
-import Anthropic from '@anthropic-ai/sdk';
+// Respostas com a IA gratuita do Cloudflare (Workers AI), usando os trechos da base
 
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5-5';
-const EFFORT = process.env.AI_EFFORT || 'medium';
-const HISTORY_LIMIT = 12; // últimas mensagens da conversa enviadas como contexto
-
-export const aiEnabled = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
-const client = aiEnabled ? new Anthropic() : null;
+const HISTORY_LIMIT = 8; // últimas mensagens enviadas como contexto
+const MAX_HISTORY_CHARS = 2000; // corta respostas antigas longas para economizar a cota diária
 
 const INSTRUCTIONS = `Você é o Assistente Diesel da FB Consult, uma consultoria de gestão para transportadoras rodoviárias de carga.
 Quem conversa com você são os consultores da FB. Seu papel é tirar dúvidas rápidas sobre a legislação do diesel (tributação, ANP, CONTRAN, CONAMA, biodiesel, ARLA, trabalhista ligada à premiação) e sobre o Método FB de gestão de diesel, sempre indicando as fontes.
 
-Como responder:
-- Responda em português do Brasil, de forma direta e prática, como um colega experiente. Comece pela resposta; depois dê o detalhe necessário.
-- Baseie-se nos TRECHOS DA BASE DE CONHECIMENTO fornecidos. Cite a fonte de cada afirmação com o número do trecho entre colchetes, por exemplo [1] ou [2][3].
+Regras:
+- Responda SEMPRE em português do Brasil, de forma direta e prática. Comece pela resposta; depois dê o detalhe necessário.
+- Use SOMENTE as informações dos TRECHOS DA BASE DE CONHECIMENTO abaixo. Cite a fonte de cada afirmação com o número do trecho entre colchetes, por exemplo [1] ou [2][3].
 - Deixe claro o que é LEGISLAÇÃO (norma oficial) e o que é MÉTODO FB (prática interna da consultoria).
-- Se os trechos não cobrirem a pergunta, diga isso com clareza. Você pode complementar com conhecimento geral, mas marque esse trecho como "fora da base, confirmar na fonte oficial" e não invente números de leis, alíquotas ou datas.
-- Valores que mudam com frequência (alíquota ad rem do ICMS, PIS/COFINS, percentual de biodiesel) vêm com a data de verificação do trecho: mencione essa data e recomende confirmar na fonte oficial quando o valor for usado em cálculo para cliente.
-- Quando o caso concreto envolver crédito tributário, regime especial ou risco trabalhista, recomende validar com o contador ou o jurídico do cliente.
-- Use listas curtas e negrito com moderação. Não repita a pergunta.`;
+- Se os trechos não responderem à pergunta, diga claramente que a base não cobre o assunto e sugira consultar a fonte oficial. Nunca invente números de leis, alíquotas, valores ou datas.
+- Para valores que mudam com frequência (ICMS ad rem, PIS/COFINS, percentual de biodiesel), informe a data "Verificado em" do trecho e recomende confirmar na fonte oficial antes de usar com o cliente.
+- Em casos concretos de crédito tributário, regime especial ou risco trabalhista, recomende validar com o contador ou o jurídico do cliente.
+- Seja conciso: no máximo cerca de 300 palavras, com listas curtas quando ajudar.`;
 
 function formatExcerpts(chunks) {
   if (!chunks.length) return 'Nenhum trecho relevante foi encontrado na base de conhecimento para esta pergunta.';
@@ -29,7 +24,6 @@ function formatExcerpts(chunks) {
         `Seção: ${c.heading}`,
         `Categoria: ${c.category}`,
         c.source ? `Fonte: ${c.source}` : null,
-        c.url ? `Link: ${c.url}` : null,
         c.verifiedAt ? `Verificado em: ${c.verifiedAt}` : null,
       ]
         .filter(Boolean)
@@ -39,75 +33,84 @@ function formatExcerpts(chunks) {
     .join('\n\n=====\n\n');
 }
 
-/** Converte as mensagens salvas no banco para o formato da API (sempre começando por "user"). */
-function toApiHistory(history) {
+function toModelHistory(history) {
   const recent = history.slice(-HISTORY_LIMIT);
   while (recent.length && recent[0].role !== 'user') recent.shift();
-  return recent.map((m) => ({ role: m.role, content: m.content }));
+  return recent.map((m) => ({
+    role: m.role,
+    content: m.content.length > MAX_HISTORY_CHARS ? m.content.slice(0, MAX_HISTORY_CHARS) + '…' : m.content,
+  }));
+}
+
+export function aiEnabled(env) {
+  return env.AI_MODE !== 'off' && !!env.AI;
 }
 
 /**
- * Gera a resposta em streaming.
- * @param {Array<{role:string, content:string}>} history mensagens anteriores + a pergunta atual (última)
- * @param {Array} chunks trechos recuperados da base
- * @param {(delta:string)=>void} onDelta chamado a cada pedaço de texto
- * @returns {Promise<string>} texto completo da resposta
+ * Gera a resposta em streaming com Workers AI.
+ * Lança erro se a IA falhar (por exemplo, cota diária esgotada); quem chama decide o que fazer.
  */
-export async function generateAnswer(history, chunks, onDelta) {
-  if (!aiEnabled) return offlineAnswer(chunks, onDelta);
+export async function generateAnswer(env, history, chunks, onDelta) {
+  const messages = [
+    { role: 'system', content: `${INSTRUCTIONS}\n\nTRECHOS DA BASE DE CONHECIMENTO\n\n${formatExcerpts(chunks)}` },
+    ...toModelHistory(history),
+  ];
 
-  const stream = client.beta.messages.stream({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    output_config: { effort: EFFORT },
-    system: [
-      { type: 'text', text: INSTRUCTIONS, cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: `TRECHOS DA BASE DE CONHECIMENTO\n\n${formatExcerpts(chunks)}` },
-    ],
-    messages: toApiHistory(history),
+  const stream = await env.AI.run(env.AI_MODEL, {
+    messages,
+    stream: true,
+    max_tokens: 1200,
+    temperature: 0.2,
   });
 
-  stream.on('text', (delta) => onDelta(delta));
-  const final = await stream.finalMessage();
-
-  let text = final.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
-
-  if (final.stop_reason === 'refusal') {
-    const note = '\n\n_Não foi possível responder a esta pergunta. Reformule ou consulte a fonte oficial._';
-    onDelta(note);
-    text += note;
-  } else if (final.stop_reason === 'max_tokens') {
-    const note = '\n\n_(Resposta interrompida por limite de tamanho. Peça para continuar.)_';
-    onDelta(note);
-    text += note;
+  // Workers AI devolve Server-Sent Events: linhas "data: {...}" terminando em "data: [DONE]"
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let text = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line.startsWith('data:')) continue;
+      const data = line.slice(5).trim();
+      if (data === '[DONE]') continue;
+      let piece = '';
+      try {
+        const obj = JSON.parse(data);
+        piece = obj.response ?? obj.choices?.[0]?.delta?.content ?? '';
+      } catch {
+        continue;
+      }
+      if (piece) {
+        text += piece;
+        onDelta(piece);
+      }
+    }
   }
   return text;
 }
 
-/** Modo sem IA: devolve os trechos mais relevantes encontrados na base. */
-async function offlineAnswer(chunks, onDelta) {
-  let text;
+/** Sem IA (desligada ou cota esgotada): devolve os trechos mais relevantes da base. */
+export function offlineAnswer(chunks, reason) {
+  const intro = reason === 'quota'
+    ? '_A cota diária gratuita da IA acabou ou a IA está indisponível agora. Enquanto isso, estes são os trechos mais relevantes da base:_'
+    : '_A IA está desligada. Estes são os trechos mais relevantes da base de conhecimento:_';
   if (!chunks.length) {
-    text =
-      'A IA ainda não está configurada (falta a chave `ANTHROPIC_API_KEY` no arquivo `.env`) e não encontrei trechos da base relacionados à sua pergunta. Tente outras palavras ou consulte a aba **Fontes**.';
-  } else {
-    text =
-      '_A IA ainda não está configurada (falta a chave `ANTHROPIC_API_KEY` no arquivo `.env`). Enquanto isso, estes são os trechos mais relevantes da base de conhecimento:_\n\n' +
-      chunks
-        .slice(0, 4)
-        .map((c, i) => {
-          const resumo = c.text.length > 600 ? c.text.slice(0, 600).trimEnd() + '…' : c.text;
-          return `**${c.docTitle} — ${c.heading}** [${i + 1}]\n\n${resumo}`;
-        })
-        .join('\n\n');
+    return `${intro}\n\nNão encontrei trechos da base relacionados à sua pergunta. Tente outras palavras ou consulte a aba **Fontes**.`;
   }
-  onDelta(text);
-  return text;
+  return (
+    `${intro}\n\n` +
+    chunks
+      .slice(0, 4)
+      .map((c, i) => {
+        const resumo = c.text.length > 600 ? c.text.slice(0, 600).trimEnd() + '…' : c.text;
+        return `**${c.docTitle} — ${c.heading}** [${i + 1}]\n\n${resumo}`;
+      })
+      .join('\n\n')
+  );
 }
-
-export { MODEL };

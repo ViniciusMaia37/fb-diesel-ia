@@ -258,8 +258,10 @@ function enterApp() {
   $$('[data-admin-only]').forEach((el) => (el.hidden = u.role !== 'admin'));
   const pill = $('#ai-status');
   pill.className = `pill ${state.ai?.enabled ? 'is-on' : 'is-off'}`;
-  pill.textContent = state.ai?.enabled ? 'IA ativa' : 'IA não configurada';
-  pill.title = state.ai?.enabled ? `Modelo: ${state.ai.model}` : 'Defina ANTHROPIC_API_KEY no .env do servidor';
+  pill.textContent = state.ai?.enabled ? 'IA ativa' : 'IA desligada';
+  pill.title = state.ai?.enabled
+    ? `Workers AI (cota diária gratuita) · ${state.ai.model}`
+    : 'O chat responde com os trechos da base de conhecimento';
   setView('chat');
   loadConversations().then(() => newChat());
 }

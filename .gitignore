@@ -3,9 +3,10 @@ node_modules/
 # Segredos e configuração local
 .env
 .env.*
-!.env.example
+.dev.vars*
 
-# Banco de dados local (usuários, senhas e histórico de conversas)
+# Banco de dados local do wrangler (testes) e arquivos temporários
+.wrangler/
 data/
 *.db
 *.db-shm
